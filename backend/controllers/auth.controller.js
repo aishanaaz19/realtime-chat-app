@@ -1,6 +1,6 @@
 
 import {generateToken} from "../lib/utils.js";
-import User from "../models/user.modal.js";
+import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
 
@@ -13,7 +13,7 @@ export const signup= async (req,res) => {
             return res.status(400).json[{message:"all fields are required"}];
         }
         if (password.length<6){
-            return res.stetus(400).json[{message:"password must be at lest 6 character"}];
+            return res.status(400).json[{message:"password must be at lest 6 character"}];
         }
 
         const user =await user.findOne ({email})
@@ -23,12 +23,12 @@ export const signup= async (req,res) => {
         } 
 
         const salt= await bcrypt.genSalt(10)
-        const hashedpassword= await bcrypt.hash(password,salt);
+        const hashedPassword= await bcrypt.hash(password,salt);
 
-        const newUser= new user({
+        const newUser= new User({
             fullName,
             email,
-            password:hashedpassword,
+            password:hashedPassword,
         });
         if(newUser){
             //generate jwt token here 
@@ -36,7 +36,7 @@ export const signup= async (req,res) => {
         generateToken(newUser._id,res)
         await newUser.save();
 
-        res.stetus(201).json({
+        res.status(201).json({
             _id:newUser._id,
             fullName:newUser,fullNme,
             email: newUser.email,
@@ -45,18 +45,18 @@ export const signup= async (req,res) => {
         });
     
         } else{
-            res.stetus(400).json({message:"invalid user data"});  
+            res.status(400).json({message:"invalid user data"});  
         } 
     }
     catch (error) {
         console.log("Error in signup controller",error.messege);
-        res.stetus(500).json({message:"Internal server Error "});
+        res.status(500).json({message:"Internal server Error "});
     }
 };
 
 export const login =(req, res)=>{
-    res,send ("logout route");
+    res.send ("login route");
 };
 export const logout=(req, res) =>{
-    res,send("logout route");
+    res.send("logout route");
 };
