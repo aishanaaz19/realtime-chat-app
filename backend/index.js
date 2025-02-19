@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv"
  import {connectDB} from "./lib/db.js";
- import autroutes from "./routes/auth.route.js";
+ import authRoutes from "./routes/auth.route.js";
 
  dotenv.config();
 
@@ -12,7 +12,7 @@ import dotenv from "dotenv"
  app.use(express.json());
  app.use(cors({
    origin: "http://localhost:5173",
-   credentials: true
+   credentials: true 
 }));
  app.use("/api/auth",authRoutes);
  app.listen(PORT,()=>{
