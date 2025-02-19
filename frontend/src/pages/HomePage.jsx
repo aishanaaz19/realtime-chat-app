@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { usechatstore } from "..store/usechatstore";
 
 import sidebar from "../components/sidebar";
@@ -20,3 +21,14 @@ const homepage = () => {
     )
 };
 export default homepage;
+=======
+import React from 'react'
+
+const HomePage = () => {
+  return (
+    <div>HomePage</div>
+  )
+}
+
+export default HomePage
+>>>>>>> 287dd3650691ad6d1f31ad97d6a4c7fbdf96fbbd
