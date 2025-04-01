@@ -1,6 +1,6 @@
 import React from "react";
 import { userrect } from React
-import { usechatstore } from "./store/usechatstore";
+import { usecCatStore } from "./store/useChatStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 
 const Sidebar = () => {
