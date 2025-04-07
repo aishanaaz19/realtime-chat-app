@@ -1,11 +1,11 @@
-import { usechatstore } from "../store/usechatstore.js";
+import { useChatStore } from "../store/usechatstore.js";
 
 import Sidebar from "../components/sidebar.jsx";
 import NoChatSelected from "../components/nochatselected.jsx";
-// import ChatContainer from "../components/chatcointainer.jsx";
+import ChatContainer from "../components/chatcointainer.jsx";
 
 const HomePage = () => {
-  const { selectedUser } = usechatstore();
+  const { selectedUser } = useChatStore();
 
   return (
     <div className="h-screen bg-base-200">
