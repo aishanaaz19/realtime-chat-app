@@ -4,16 +4,21 @@ import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 
 export const signup= async (req,res) => {
-    const{fullName,email,password}= req.body;  
+    const{ username,fullName,email,password }= req.body;  
 
      try {
  
-         if(!fullName|| !email || !password){
+         if(!username || !fullName || !email || !password){
              return res.status(400).json({message:"All fields are required"});
          }
          if (password.length<6){
              return res.status(400).json({message:"Password must be at lest 6 character"});
          }
+
+         const existingUsername = await User.findOne({ username });
+            if (existingUsername) {
+            return res.status(400).json({ message: "Username already taken" });
+        }
  
          const user =await User.findOne({email});
  
@@ -25,6 +30,7 @@ export const signup= async (req,res) => {
          const hashedPassword= await bcrypt.hash(password,salt);
  
          const newUser= new User({
+             username,
              fullName,
              email,
              password:hashedPassword,
@@ -37,6 +43,7 @@ export const signup= async (req,res) => {
     
             res.status(201).json({
                 _id: newUser._id,
+                username: newUser.username,
                 fullName: newUser.fullName,
                 email: newUser.email,
                 profilePic: newUser.profilePic, 
@@ -54,9 +61,9 @@ export const signup= async (req,res) => {
  };
 
 export const login = async (req, res) => {
-    const {email, password} = req.body
+    const {username, password} = req.body
     try{
-        const user = await User.findOne ({email})
+        const user = await User.findOne ({username})
 
         if (!user) {
             return res.status(400).json({message:"Invalid Credentials" })
@@ -71,6 +78,7 @@ export const login = async (req, res) => {
 
         res.status(200).json({
             _id:user._id,
+            username: user.username,
             fullname: user.fullName,
             email: user.email,
             profilePic: user.profilePic,
@@ -125,3 +133,23 @@ export const checkAuth = (req, res) => {
         res.status(500).json({message: "Internal Server Error"});
     }
 }
+
+export const simpleForgotPassword = async (req, res) => {
+    const { email, newPassword } = req.body;
+  
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ error: "User not found with this email." });
+      }
+  
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      await user.save();
+  
+      res.json({ message: "Password updated successfully." });
+    } catch (error) {
+      console.error("Forgot Password Error:", error.message);
+      res.status(500).json({ error: "Something went wrong." });
+    }
+  };

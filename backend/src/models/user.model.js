@@ -2,14 +2,19 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        email: {
-            type: String,
-            required: true,
-            unique: true,
+        username: { 
+            type: String, 
+            unique: true, 
+            required: true 
         },
         fullName: {
             type: String,
             required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
         },
         password: {
             type: String,
@@ -20,6 +25,10 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        friends: [{ 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User" 
+        }]
     },
     {timestamps: true}
 );

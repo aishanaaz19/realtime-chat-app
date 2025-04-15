@@ -1,5 +1,5 @@
 import { useChatStore } from "../store/usechatstore.js";
-
+import ChatbotButtonWithDialog from "@/components/ChatBotButtonWithDialog.jsx";
 import Sidebar from "../components/sidebar.jsx";
 import NoChatSelected from "../components/nochatselected.jsx";
 import ChatContainer from "../components/chatcointainer.jsx";
@@ -15,6 +15,7 @@ const HomePage = () => {
             <Sidebar />
 
             {!selectedUser ? <NoChatSelected /> : <ChatContainer />}
+            <ChatbotButtonWithDialog />
           </div>
         </div>
       </div>
