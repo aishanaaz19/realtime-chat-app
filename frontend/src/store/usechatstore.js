@@ -10,6 +10,7 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
 
+  // Get friends list
   getFriends: async () => {
     set({ isUsersLoading: true });
     try {
@@ -26,23 +27,44 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+  // Get chat messages with selected user
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
-      set({ messages: res.data });
+      // Only add messages we don't already have
+      set((state) => {
+        const existingIds = new Set(state.messages.map(m => m._id));
+        const newMessages = res.data.filter(msg => !existingIds.has(msg._id));
+        return { messages: [...state.messages, ...newMessages] };
+      });
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to load messages.");
     } finally {
       set({ isMessagesLoading: false });
     }
   },
 
+  // Send message + emit via socket
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
+    const socket = useAuthStore.getState().socket;
+    const currentUser = useAuthStore.getState().authUser;
+
     try {
       const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+
+      // Update local state
       set({ messages: [...messages, res.data] });
+
+      // Emit socket message to receiver
+      if (socket && currentUser && selectedUser) {
+        socket.emit("sendMessage", {
+          senderId: currentUser._id,
+          receiverId: selectedUser._id,
+          message: res.data,
+        });
+      }
     } catch (error) {
       console.error("Error in sending message", error);
       const errMsg =
@@ -54,55 +76,74 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  subscribeToMessages: () => {
-    const { selectedUser } = get();  // Get selectedUser from state
-    const socket = useAuthStore.getState().socket;
-    const currentUser = useAuthStore.getState().user;
-
-    console.log("Selected User:", selectedUser);  // Debugging: Check selectedUser
-    console.log("Socket:", socket);  // Debugging: Check socket
-    console.log("Current User:", currentUser);  // Debugging: Check currentUser
-
-    if (!socket || !currentUser || !selectedUser) {
-      console.log("Missing socket, currentUser, or selectedUser.");
-      return;  // Return early if any of the variables are missing
-    }
-
-    socket.on("newMessage", (newMessage) => {
-      console.log("New message received:", newMessage);  // Log the new message
-
-      const isFromSelectedUser = selectedUser?._id === newMessage.senderId;
-      const isFromSelf = newMessage.senderId === currentUser._id;
-
-      if (!isFromSelf && !isFromSelectedUser) {
-        toast(`${newMessage.senderName || "Someone"} sent you a message 💬`);
-      }
-
-      // If the message is from the current chat, update messages
-      if (isFromSelectedUser) {
-        set((state) => ({
-          messages: [...state.messages, newMessage],  // Always use latest state
-        }));
-      }
-    });
-  },
-
-  unsubscribeFromMessages: () => {
-    const socket = useAuthStore.getState().socket;
-    socket.off("newMessage");
-  },
-
-  // Set the selected user
+  // Set the selected user and resubscribe
   setSelectedUser: (selectedUser) => {
     console.log("Setting selected user:", selectedUser); // Debugging
     set({ selectedUser });
 
-    // Ensure socket and selectedUser are available before subscribing
+    const trySubscribe = (attempts = 5) => {
+      const socket = useAuthStore.getState().socket;
+      const user = useAuthStore.getState().authUser;
+
+      if (selectedUser && socket && user) {
+        get().subscribeToMessages(); // Proceed to subscribe
+      } else if (attempts > 0) {
+        console.log("Retrying subscribe in 200ms...");
+        setTimeout(() => trySubscribe(attempts - 1), 200); // Retry subscription
+      } else {
+        console.error("Socket or user still missing after retries");
+      }
+    };
+
+    trySubscribe(); // Initial subscription attempt
+  },
+
+  // Listen for new messages in real-time
+  subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
-    if (selectedUser && socket) {
-      get().subscribeToMessages();  // Subscribe when both are available
-    } else {
-      console.log("Socket or selected user is missing. Can't subscribe.");
+    const currentUser = useAuthStore.getState().authUser;
+  
+    if (!socket || !currentUser) {
+      console.log("Socket or user missing");
+      return;
     }
+  
+    // Clean up previous listener to avoid duplicates
+    socket.off("newMessage");
+  
+    socket.on("newMessage", (newMessage) => {
+      console.log("New message received:", newMessage);
+      const { selectedUser, messages } = get();
+  
+      // Only add the message if it's not already in the state
+      if (!messages.some((msg) => msg._id === newMessage._id)) {
+        set((state) => ({
+          messages: [...state.messages, newMessage],
+        }));
+      }
+  
+      // Show toast only if not from current chat and not from self
+      const isFromSelectedUser = selectedUser?._id === newMessage.senderId;
+      const isFromSelf = newMessage.senderId === currentUser._id;
+  
+      if (!isFromSelf && !isFromSelectedUser) {
+        toast(`${newMessage.senderName || "Someone"} sent you a message 💬`);
+      }
+    });
+  },
+  
+
+  // Unsubscribe from socket
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket;
+    socket?.off("newMessage");
+  },
+
+  // Clean up socket and state
+  cleanup: () => {
+    const socket = useAuthStore.getState().socket;
+    socket?.off("newMessage");
+    set({ messages: [], selectedUser: null });
   },
 }));
+

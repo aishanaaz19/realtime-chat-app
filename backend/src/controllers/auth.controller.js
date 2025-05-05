@@ -5,51 +5,39 @@ import cloudinary from "../lib/cloudinary.js";
 
 export const signup= async (req,res) => {
     const{ username,fullName,email,password }= req.body;  
-
      try {
- 
          if(!username || !fullName || !email || !password){
              return res.status(400).json({message:"All fields are required"});
          }
          if (password.length<6){
              return res.status(400).json({message:"Password must be at lest 6 character"});
          }
-
          const existingUsername = await User.findOne({ username });
             if (existingUsername) {
             return res.status(400).json({ message: "Username already taken" });
         }
- 
-         const user =await User.findOne({email});
- 
+         const user =await User.findOne({email}); 
          if(user) {
              return res.status(400).json({message:"Email already exists"});
-         } 
- 
+         }  
          const salt= await bcrypt.genSalt(10);
-         const hashedPassword= await bcrypt.hash(password,salt);
- 
+         const hashedPassword= await bcrypt.hash(password,salt); 
          const newUser= new User({
              username,
              fullName,
              email,
              password:hashedPassword,
          });
-
          if(newUser){
-             //generate jwt token here 
             generateToken(newUser._id,res)
-            await newUser.save();
-    
+            await newUser.save();    
             res.status(201).json({
                 _id: newUser._id,
                 username: newUser.username,
                 fullName: newUser.fullName,
                 email: newUser.email,
-                profilePic: newUser.profilePic, 
-    
-            });
-     
+                profilePic: newUser.profilePic,     
+            });     
          } else {
              res.status(400).json({message:"invalid user data"});  
          } 
@@ -64,18 +52,14 @@ export const login = async (req, res) => {
     const {username, password} = req.body
     try{
         const user = await User.findOne ({username})
-
         if (!user) {
             return res.status(400).json({message:"Invalid Credentials" })
         }
-
         const isPasswordCorrect = await bcrypt.compare(password, user.password)
         if (!isPasswordCorrect) {
             return res.status(400).json({message:"Invalid Credentials"})
         }
-
         generateToken(user._id, res)
-
         res.status(200).json({
             _id:user._id,
             username: user.username,
@@ -105,7 +89,6 @@ export const updateProfile = async (req,res) => {
     try {
         const {profilePic} = req.body;
         req.user._id
-
         if (!profilePic) {
             return res.status(400).json({ message: "Profile pic required"})
         }
@@ -115,7 +98,6 @@ export const updateProfile = async (req,res) => {
             { profilePic: uploadResponse.secure_url },
             { new: true }
         );
-
         res.status(200).json(updatedUser);
     }
     catch (error) {
@@ -135,18 +117,15 @@ export const checkAuth = (req, res) => {
 }
 
 export const simpleForgotPassword = async (req, res) => {
-    const { email, newPassword } = req.body;
-  
+    const { email, newPassword } = req.body;  
     try {
       const user = await User.findOne({ email });
       if (!user) {
         return res.status(404).json({ error: "User not found with this email." });
-      }
-  
+      }  
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
-      await user.save();
-  
+      await user.save();  
       res.json({ message: "Password updated successfully." });
     } catch (error) {
       console.error("Forgot Password Error:", error.message);
