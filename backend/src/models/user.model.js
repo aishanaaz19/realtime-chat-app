@@ -28,7 +28,19 @@ const userSchema = new mongoose.Schema(
         friends: [{ 
             type: mongoose.Schema.Types.ObjectId, 
             ref: "User" 
-        }]
+        }],
+        lastActive: { 
+            type: Date, 
+            default: Date.now 
+        },
+        isOnline: { 
+            type: Boolean, 
+            default: false 
+        },
+        blockedUsers: [{ 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User" 
+        }],
     },
     {timestamps: true}
 );

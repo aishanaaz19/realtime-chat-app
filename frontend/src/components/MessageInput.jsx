@@ -9,6 +9,7 @@ const MessageInput = () => {
   const [mediaPreview, setMediaPreview] = useState(null); // base64
   const [mediaType, setMediaType] = useState(""); // "image", "video", "doc"
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGif, setShowGif] = useState(false);
 
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
@@ -132,7 +133,7 @@ const MessageInput = () => {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-
+          
           {/* File Input (shared by both image and attachment buttons) */}
           <input
             type="file"

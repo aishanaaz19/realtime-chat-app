@@ -7,11 +7,12 @@ import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import FriendsPage from "./pages/FriendsPage";
 import ForgotPassword from "./pages/ForgotPassword";
+import BlockedUsers from "./pages/BlockedUsers";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useChatStore } from "./store/usechatstore";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useEffect } from "react";
-
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
@@ -19,14 +20,18 @@ import { Toaster } from "react-hot-toast";
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
   const { theme } = useThemeStore();
-
-  console.log({ onlineUsers });
+  const { subscribeToMessages, unsubscribeFromMessages } = useChatStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  console.log({ authUser });
+  console.log({ authUser, onlineUsers });
+
+  useEffect(() => {
+    subscribeToMessages();
+    return () => unsubscribeFromMessages();
+  }, []);
 
   if (isCheckingAuth && !authUser)
     return (
@@ -46,6 +51,7 @@ const App = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/friends" element={<FriendsPage />} />
+        <Route path="/blocked-users" element={<BlockedUsers />} />
       </Routes>
 
       <Toaster />
