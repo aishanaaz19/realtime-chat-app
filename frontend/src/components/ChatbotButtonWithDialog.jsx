@@ -67,10 +67,11 @@ const ChatbotButtonWithDialog = () => {
           </button>
 
           {response && (
-            <div className="mt-3 p-2 bg-gray-100 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
-              {response}
-            </div>
-          )}
+  <div className="mt-3 p-2 bg-gray-100 rounded-md text-sm text-gray-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
+    {response}
+  </div>
+)}
+
         </div>
       )}
     </>
