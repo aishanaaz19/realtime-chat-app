@@ -12,6 +12,7 @@ import { app, server } from "./lib/socket.js";
 dotenv.config();
 const PORT = process.env.PORT;
 
+
 app.use(express.json({ limit: '30mb' })); 
 app.use(express.urlencoded({ limit: '30mb', extended: true })); 
 app.use(cookieParser());
