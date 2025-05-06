@@ -23,30 +23,41 @@ export const getMessages = async (req, res) => {
 // SEND a new message with optional media
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image, video, document } = req.body;
+    const { text, image, video, document, gif } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
+
     let imageUrl = null;
     let videoUrl = null;
     let documentUrl = null;
+    let gifUrl = null;
+
     if (image) {
       const uploaded = await cloudinary.uploader.upload(image, {
         resource_type: "image",
       });
       imageUrl = uploaded.secure_url;
     }
+
     if (video) {
       const uploaded = await cloudinary.uploader.upload(video, {
         resource_type: "video",
       });
       videoUrl = uploaded.secure_url;
     }
+
     if (document) {
       const uploaded = await cloudinary.uploader.upload(document, {
         resource_type: "raw",
       });
       documentUrl = uploaded.secure_url;
     }
+
+    // Directly use GIF URL (no need to upload it)
+    if (gif) {
+      gifUrl = gif; // this should already be a Giphy URL
+    }
+
     const newMessage = await Message.create({
       senderId,
       receiverId,
@@ -54,15 +65,19 @@ export const sendMessage = async (req, res) => {
       image: imageUrl,
       video: videoUrl,
       document: documentUrl,
+      gif: gifUrl,
     });
+
     const populatedMessage = {
       ...newMessage._doc,
       senderName: req.user.fullName || req.user.username || "Someone",
     };
+
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", populatedMessage);
     }
+
     res.status(201).json(populatedMessage);
   } catch (error) {
     console.error("Error in sendMessage:", error.message);

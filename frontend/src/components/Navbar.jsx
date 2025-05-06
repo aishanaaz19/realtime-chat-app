@@ -2,7 +2,7 @@ import React from 'react'
 import SearchUser from './SearchBar';
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, Ban } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
@@ -26,22 +26,22 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
           <SearchUser />
             <Link
-              to={"/settings"}
-              className={`
-              btn btn-sm gap-2 transition-colors
-              
-              `}
-            >
+              to={"/settings"} className={`btn btn-sm gap-2 transition-colors`}>
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Settings</span>
             </Link>
 
             {authUser && (
               <>
-                <Link to={"/profile"} className={`btn btn-sm gap-2`}>
-                  <User className="size-5" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Link>
+              <Link to={"/blocked-users"} className="btn btn-sm gap-2">
+                <Ban className="size-5" />
+                <span className="hidden sm:inline">Blocked Users</span>
+              </Link>
+
+              <Link to={"/profile"} className={`btn btn-sm gap-2`}>
+                <User className="size-5" />
+                <span className="hidden sm:inline">Profile</span>
+              </Link>
 
                 <button className="flex gap-2 items-center" onClick={logout}>
                   <LogOut className="size-5" />

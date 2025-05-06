@@ -12,6 +12,7 @@ export const useAuthStore = create((set, get) => ({
   isUpdatingProfile: false,
   isCheckingAuth: true,
   onlineUsers: [],
+  blockedUsers: [],
   socket: null,
 
   checkAuth: async () => {
@@ -80,6 +81,57 @@ export const useAuthStore = create((set, get) => ({
     } finally {
       set({ isUpdatingProfile: false });
     }
+  },
+
+  // setBlockedUsers: (blockedUsers) => {
+  //   set(state => ({
+  //     authUser: {
+  //       ...state.authUser,
+  //       blockedUsers: blockedUsers
+  //     }
+  //   }));
+  // },
+
+  addToBlockedList: (userId) => set((state) => {
+    // Ensure blockedUsers exists and is an array
+    const currentBlocked = Array.isArray(state.authUser.blockedUsers) 
+      ? state.authUser.blockedUsers 
+      : [];
+      
+    return {
+      authUser: {
+        ...state.authUser,
+        blockedUsers: [...currentBlocked, userId]
+      }
+    };
+  }),
+
+  unblockUser: async (userId) => {
+    try {
+      await axiosInstance.post('/users/unblock', { userId });
+      set(state => ({
+        authUser: {
+          ...state.authUser,
+          blockedUsers: state.authUser.blockedUsers.filter(id => id !== userId)
+        }
+      }));
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  removeFromBlockedList: (userId) => {
+    set(state => ({
+      authUser: {
+        ...state.authUser,
+        blockedUsers: state.authUser.blockedUsers.filter(user => {
+          if (typeof user === "object" && user._id) {
+            return user._id !== userId;
+          }
+          return user !== userId;
+        }),
+      }
+    }));
   },
 
   connectSocket: () => {
