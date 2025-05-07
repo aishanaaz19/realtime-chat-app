@@ -78,26 +78,35 @@ export const useChatStore = create((set, get) => ({
 
   // Set the selected user and resubscribe
   setSelectedUser: (selectedUser) => {
-    console.log("Setting selected user:", selectedUser); // Debugging
+    console.log("Setting selected user:", selectedUser); 
     set({ selectedUser });
-
-    const trySubscribe = (attempts = 5) => {
-      const socket = useAuthStore.getState().socket;
-      const user = useAuthStore.getState().authUser;
-
-      if (selectedUser && socket && user) {
-        get().subscribeToMessages(); // Proceed to subscribe
-      } else if (attempts > 0) {
-        console.log("Retrying subscribe in 200ms...");
-        setTimeout(() => trySubscribe(attempts - 1), 200); // Retry subscription
-      } else {
-        console.error("Socket or user still missing after retries");
-      }
-    };
-
-    trySubscribe(); // Initial subscription attempt
   },
 
+  blockUser: async (userId) => {
+    try {
+      const res = await axiosInstance.post('/users/block', { userId });
+      const user = res.data.user;
+      useAuthStore.getState().addToBlockedList(user);
+      return res.data;
+    } catch (err) {
+      throw err;
+    }
+  },
+  
+
+  unblockUser: async (userId) => {
+    try {
+      const response = await axiosInstance.post('/users/unblock', { userId });
+      set(state => ({
+        users: [...state.users, response.data.user],
+      }));
+      useAuthStore.getState().removeFromBlockedList(userId);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
   // Listen for new messages in real-time
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
@@ -108,42 +117,49 @@ export const useChatStore = create((set, get) => ({
       return;
     }
   
-    // Clean up previous listener to avoid duplicates
-    socket.off("newMessage");
-  
+    // Remove previous listener before adding a new one
+    socket.off("newMessage"); // prevent duplicate binding
+
     socket.on("newMessage", (newMessage) => {
-      console.log("New message received:", newMessage);
+      console.log("🟢 New message received:", newMessage);
+    
       const { selectedUser, messages } = get();
-  
-      // Only add the message if it's not already in the state
-      if (!messages.some((msg) => msg._id === newMessage._id)) {
-        set((state) => ({
-          messages: [...state.messages, newMessage],
-        }));
+      const currentUser = useAuthStore.getState().authUser;
+    
+      const isCurrentChat =
+        selectedUser &&
+        ((selectedUser._id === newMessage.senderId && newMessage.receiverId === currentUser._id) ||
+         (selectedUser._id === newMessage.receiverId && newMessage.senderId === currentUser._id));
+    
+      // If message belongs to currently opened chat
+      if (isCurrentChat) {
+        const alreadyExists = messages.some((msg) => msg._id === newMessage._id);
+        if (!alreadyExists) {
+          set((state) => ({
+            messages: [...state.messages, newMessage],
+          }));
+        }
       }
-  
-      // Show toast only if not from current chat and not from self
-      const isFromSelectedUser = selectedUser?._id === newMessage.senderId;
-      const isFromSelf = newMessage.senderId === currentUser._id;
-  
-      if (!isFromSelf && !isFromSelectedUser) {
+    
+      // Show toast only if message is NOT in currently opened chat
+      const isFromSomeoneElse = newMessage.senderId !== currentUser._id;
+      const isToThisUser = newMessage.receiverId === currentUser._id;
+    
+      if (!isCurrentChat && isFromSomeoneElse && isToThisUser) {
         toast(`${newMessage.senderName || "Someone"} sent you a message 💬`);
       }
     });
+    
+    
   },
   
-
   // Unsubscribe from socket
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
-    socket?.off("newMessage");
+    if (socket) {
+      socket.off("newMessage");
+    }
   },
 
-  // Clean up socket and state
-  cleanup: () => {
-    const socket = useAuthStore.getState().socket;
-    socket?.off("newMessage");
-    set({ messages: [], selectedUser: null });
-  },
 }));
 
