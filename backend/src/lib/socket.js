@@ -23,12 +23,7 @@ io.on("connection", (socket) => {
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  socket.on("sendMessage", ({ senderId, receiverId, message }) => {
-    io.to(receiverId).emit("newMessage", {
-      senderId,
-      ...message,
-    }); // Send to the user's room
-  });
+ 
 
   socket.on("disconnect", () => {
     delete userSocketMap[userId];

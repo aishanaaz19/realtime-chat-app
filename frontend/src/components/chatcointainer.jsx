@@ -18,6 +18,7 @@ const ChatContainer = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  
 
   useEffect(() => {
     getMessages(selectedUser._id);
@@ -26,6 +27,8 @@ const ChatContainer = () => {
 
     return () => unsubscribeFromMessages();
   }, [selectedUser._id, getMessages, subscribeToMessages, unsubscribeFromMessages]);
+
+  
 
   useEffect(() => {
     if (messageEndRef.current && messages) {
@@ -100,6 +103,18 @@ const ChatContainer = () => {
             )}
               
               {message.text && <p>{message.text}</p>}
+              {message.senderId === authUser._id && (
+  <div className="text-right text-xs mt-1 flex justify-end items-center gap-1 text-gray-400">
+    {message.isSeen ? (
+      <span className="text-blue-500">✓✓</span> // Seen
+    ) : message.isDelivered ? (
+      <span>✓✓</span> // Delivered
+    ) : (
+      <span>✓</span> // Sent
+    )}
+  </div>
+)}
+
             </div>
           </div>
         ))}
