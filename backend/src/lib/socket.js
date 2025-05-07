@@ -58,6 +58,7 @@ io.on("connection", (socket) => {
       .catch(err => console.error("Activity update error:", err));
   });
 
+
   socket.on("disconnect", () => {
     console.log("user disconnected", socket.id);
     
