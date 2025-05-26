@@ -80,7 +80,6 @@ export const blockUser = async (req, res) => {
   }
 };
 
-
 export const blocked = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)

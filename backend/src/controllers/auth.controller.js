@@ -51,7 +51,7 @@ export const signup= async (req,res) => {
 export const login = async (req, res) => {
     const {username, password} = req.body
     try{
-        const user = await User.findOne ({username})
+        const user = await User.findOne({username})
         if (!user) {
             return res.status(400).json({message:"Invalid Credentials" })
         }
@@ -61,16 +61,18 @@ export const login = async (req, res) => {
         }
         generateToken(user._id, res)
         res.status(200).json({
-            _id:user._id,
+            _id: user._id,
             username: user.username,
-            fullname: user.fullName,
+            fullName: user.fullName, // Fixed capitalization to match schema
             email: user.email,
             profilePic: user.profilePic,
+            bio: user.bio, // Added bio field
+            createdAt: user.createdAt, // Include this for "Member Since" display
+            blockedUsers: user.blockedUsers // Include if needed for user blocking functionality
         })
-    }
-    catch (error) {
-        console.log("Error in login controller", error.message);
-        res.status(500).json({message: "Interval Server Error"});  
+    } catch (error) {
+        console.log("Error in login controller:", error);
+        res.status(500).json({message: "Internal server error"});
     }
 }
 
@@ -85,24 +87,34 @@ export const logout = (req, res) => {
     }
 }
 
-export const updateProfile = async (req,res) => {
+export const updateProfile = async (req, res) => {
     try {
-        const {profilePic} = req.body;
-        req.user._id
-        if (!profilePic) {
-            return res.status(400).json({ message: "Profile pic required"})
+        const { username, fullName, bio, profilePic } = req.body;  
+        // Check if there's a new profile pic to upload
+        let profilePicUrl;
+        if (profilePic && profilePic.startsWith('data:')) {
+            // Only upload to cloudinary if it's a new image (data URL)
+            const uploadResponse = await cloudinary.uploader.upload(profilePic);
+            profilePicUrl = uploadResponse.secure_url;
         }
-        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        // Create an update object with all fields
+        const updateData = {};
+        // Only add fields that are provided
+        if (username) updateData.username = username;
+        if (fullName) updateData.fullName = fullName;
+        if (bio !== undefined) updateData.bio = bio; // Allow empty string bio
+        if (profilePicUrl) updateData.profilePic = profilePicUrl;
+        // Update the user with all provided fields
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
-            { profilePic: uploadResponse.secure_url },
+            updateData,
             { new: true }
-        );
+        );  
         res.status(200).json(updatedUser);
     }
     catch (error) {
         console.log('Error in updating profile', error);
-        res.status(500).json({ message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 
