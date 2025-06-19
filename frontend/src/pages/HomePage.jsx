@@ -1,5 +1,5 @@
 import { useChatStore } from "../store/usechatstore.js";
-import ChatbotButtonWithDialog from "@/components/ChatBotButtonWithDialog.jsx";
+import ChatbotButtonWithDialog from "@/components/ChatbotButtonWithDialog.jsx";
 import Sidebar from "../components/sidebar.jsx";
 import NoChatSelected from "../components/nochatselected.jsx";
 import ChatContainer from "../components/chatcointainer.jsx";
