@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Camera, Mail, User, Loader2 } from "lucide-react";
+import { Camera, Mail, User, Loader2, PencilLine, UserPen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
@@ -9,9 +9,10 @@ const ProfilePage = () => {
   const [previewImg, setPreviewImg] = useState(authUser?.profilePic || null);
   const [username, setUsername] = useState(authUser?.username || "");
   const [fullName, setFullName] = useState(authUser?.fullName || "");
+  const [bio, setBio] = useState(authUser?.bio || "");
   const fileInputRef = useRef(null);
   const [isSuccess, setIsSuccess] = useState(false);
-
+  
   useEffect(() => {
     if (isSuccess && !isUpdatingProfile) {
       const timer = setTimeout(() => {
@@ -20,6 +21,14 @@ const ProfilePage = () => {
       return () => clearTimeout(timer);
     }
   }, [isSuccess, isUpdatingProfile, navigate]);
+
+  useEffect(() => {
+    setPreviewImg(authUser?.profilePic || null);
+    setUsername(authUser?.username || "");
+    setFullName(authUser?.fullName || "");
+    setBio(authUser?.bio || "Hey there! I'm using this chatsphere."); 
+  }, [authUser]);
+
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -42,6 +51,7 @@ const ProfilePage = () => {
       await updateProfile({
         username,
         fullName,
+        bio,
         profilePic: previewImg
       });
       setIsSuccess(true);
@@ -125,7 +135,7 @@ const ProfilePage = () => {
               {/* Full Name Field */}
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-base-content/80">
-                  <User className="w-4 h-4" />
+                  <UserPen className="w-4 h-4" />
                   Full Name
                 </label>
                 <input
@@ -147,6 +157,34 @@ const ProfilePage = () => {
                   {authUser?.email}
                 </div>
               </div>
+
+             {/* Bio Field */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-base-content/80">
+                  <PencilLine className="w-4 h-4" />
+                  Bio
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    
+                    // Only update if under character limit
+                    if (text.length <= 100) {
+                      setBio(text);
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-base-200 rounded-lg border border-base-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  rows="2"
+                  placeholder="Tell us about yourself..."
+                  disabled={isUpdatingProfile || isSuccess}
+                  maxLength={100}
+                />
+                <div className="text-xs text-right text-base-content/70">
+                  {bio.length}/100 characters
+                </div>
+              </div>
+
             </div>
 
             {/* Account Info */}

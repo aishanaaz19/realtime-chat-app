@@ -9,11 +9,16 @@ const MessageInput = () => {
   const [mediaPreview, setMediaPreview] = useState(null); // base64
   const [mediaType, setMediaType] = useState(""); // "image", "video", "doc"
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showGif, setShowGif] = useState(false);
 
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
   const MAX_FILE_SIZE_MB = 30;
+
+  const { selectedUser } = useChatStore();
+  if (selectedUser?.hasBlockedYou) {
+    return <p className="text-red-500 text-center mt-2">
+      You can no longer send messages to this user.</p>;
+  }
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];

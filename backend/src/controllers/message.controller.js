@@ -1,6 +1,7 @@
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+import User from "../models/user.model.js";
 
 // GET all messages between logged-in user and the selected user
 export const getMessages = async (req, res) => {
@@ -12,8 +13,9 @@ export const getMessages = async (req, res) => {
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
-    }).sort({ createdAt: 1 }); // Sorted by oldest to newest
-    res.status(200).json(messages);
+    }).sort({ createdAt: 1 });
+
+    res.status(200).json(messages); // return as-is (encrypted text)
   } catch (error) {
     console.error("Error in getMessages:", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -26,6 +28,11 @@ export const sendMessage = async (req, res) => {
     const { text, image, video, document, gif } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
+
+    const receiver = await User.findById(receiverId);
+    if (receiver.blockedUsers.includes(senderId)) {
+      return res.status(403).json({ error: "You can no longer send messages to this user." });
+    }
 
     let imageUrl = null;
     let videoUrl = null;
@@ -53,11 +60,11 @@ export const sendMessage = async (req, res) => {
       documentUrl = uploaded.secure_url;
     }
 
-    // Directly use GIF URL (no need to upload it)
     if (gif) {
-      gifUrl = gif; // this should already be a Giphy URL
+      gifUrl = gif; // already a Giphy URL, no need to upload
     }
 
+    // 🚨 Don't decrypt or change encrypted text — store as-is
     const newMessage = await Message.create({
       senderId,
       receiverId,
@@ -75,10 +82,10 @@ export const sendMessage = async (req, res) => {
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", populatedMessage);
+      io.to(receiverSocketId).emit("newMessage", populatedMessage); // Emit encrypted
     }
 
-    res.status(201).json(populatedMessage);
+    res.status(201).json(populatedMessage); // Send back encrypted
   } catch (error) {
     console.error("Error in sendMessage:", error.message);
     res.status(500).json({ error: "Internal server error" });

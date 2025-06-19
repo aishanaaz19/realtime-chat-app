@@ -7,8 +7,8 @@ const UserProfileModal = ({ user, isOpen, onClose }) => {
   const { setSelectedUser, blockUser } = useChatStore();
   const navigate = useNavigate();
   
-  // Simplified online check - only show "Online" if status is explicitly 'online'
-  const isOnline = user.status === 'online';
+  // Check if user is online based on isOnline property
+  const isOnline = user?.isOnline === true;
 
   const handleMessageClick = () => {
     setSelectedUser(user);
@@ -75,13 +75,13 @@ const UserProfileModal = ({ user, isOpen, onClose }) => {
             <div className={`mt-2 flex items-center gap-1 px-3 py-1 rounded-full ${
               isOnline 
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+                : 'bg-gray-100 dark:bg-gray-700/30 text-gray-800 dark:text-gray-300'
             }`}>
               <div className={`w-2 h-2 rounded-full ${
-                isOnline ? 'bg-green-500 animate-pulse' : 'bg-green-500 animate-pulse'
+                isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-500'
               }`}></div>
               <span className="text-sm">
-                {isOnline ? 'Online' : 'Online'}
+                {isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
 
@@ -95,7 +95,7 @@ const UserProfileModal = ({ user, isOpen, onClose }) => {
             <div className="mt-6 flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               <span className="text-sm">
-                Last seen: Just now
+                Last seen: {user.lastActive ? new Date(user.lastActive).toLocaleString() : 'Unknown'}
               </span>
             </div>
           )}

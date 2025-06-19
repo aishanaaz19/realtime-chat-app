@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import { encryptMessage, decryptMessage } from "../utils/encryption"; 
 
 export const useChatStore = create((set, get) => ({
   messages: [],
@@ -10,7 +11,6 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
 
-  // Get friends list
   getFriends: async () => {
     set({ isUsersLoading: true });
     try {
@@ -27,15 +27,18 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // Get chat messages with selected user
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
-      // Only add messages we don't already have
+      const decryptedMessages = res.data.map(msg => ({
+        ...msg,
+        text: decryptMessage(msg.text) || "[Failed to decrypt]",
+      }));
+
       set((state) => {
         const existingIds = new Set(state.messages.map(m => m._id));
-        const newMessages = res.data.filter(msg => !existingIds.has(msg._id));
+        const newMessages = decryptedMessages.filter(msg => !existingIds.has(msg._id));
         return { messages: [...state.messages, ...newMessages] };
       });
     } catch (error) {
@@ -45,24 +48,31 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // Send message + emit via socket
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     const socket = useAuthStore.getState().socket;
     const currentUser = useAuthStore.getState().authUser;
 
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+      const encryptedText = encryptMessage(messageData.text);
+      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, {
+        ...messageData,
+        text: encryptedText,
+      });
 
-      // Update local state
-      set({ messages: [...messages, res.data] });
+      // Decrypt message before adding to state (so UI can show it properly)
+      const decryptedMessage = {
+        ...res.data,
+        text: decryptMessage(res.data.text),
+      };
 
-      // Emit socket message to receiver
+      set({ messages: [...messages, decryptedMessage] });
+
       if (socket && currentUser && selectedUser) {
         socket.emit("sendMessage", {
           senderId: currentUser._id,
           receiverId: selectedUser._id,
-          message: res.data,
+          message: res.data, // send encrypted over socket
         });
       }
     } catch (error) {
@@ -76,9 +86,8 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // Set the selected user and resubscribe
   setSelectedUser: (selectedUser) => {
-    console.log("Setting selected user:", selectedUser); 
+    console.log("Setting selected user:", selectedUser);
     set({ selectedUser });
   },
 
@@ -92,7 +101,6 @@ export const useChatStore = create((set, get) => ({
       throw err;
     }
   },
-  
 
   unblockUser: async (userId) => {
     try {
@@ -106,60 +114,54 @@ export const useChatStore = create((set, get) => ({
       throw error;
     }
   },
-  
-  // Listen for new messages in real-time
+
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
     const currentUser = useAuthStore.getState().authUser;
-  
+
     if (!socket || !currentUser) {
       console.log("Socket or user missing");
       return;
     }
-  
-    // Remove previous listener before adding a new one
-    socket.off("newMessage"); // prevent duplicate binding
+
+    socket.off("newMessage");
 
     socket.on("newMessage", (newMessage) => {
       console.log("🟢 New message received:", newMessage);
-    
+
       const { selectedUser, messages } = get();
-      const currentUser = useAuthStore.getState().authUser;
-    
       const isCurrentChat =
         selectedUser &&
         ((selectedUser._id === newMessage.senderId && newMessage.receiverId === currentUser._id) ||
          (selectedUser._id === newMessage.receiverId && newMessage.senderId === currentUser._id));
-    
-      // If message belongs to currently opened chat
+
+      const decryptedMessage = {
+        ...newMessage,
+        text: decryptMessage(newMessage.text),
+      };
+
       if (isCurrentChat) {
         const alreadyExists = messages.some((msg) => msg._id === newMessage._id);
         if (!alreadyExists) {
           set((state) => ({
-            messages: [...state.messages, newMessage],
+            messages: [...state.messages, decryptedMessage],
           }));
         }
       }
-    
-      // Show toast only if message is NOT in currently opened chat
+
       const isFromSomeoneElse = newMessage.senderId !== currentUser._id;
       const isToThisUser = newMessage.receiverId === currentUser._id;
-    
+
       if (!isCurrentChat && isFromSomeoneElse && isToThisUser) {
         toast(`${newMessage.senderName || "Someone"} sent you a message 💬`);
       }
     });
-    
-    
   },
-  
-  // Unsubscribe from socket
+
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     if (socket) {
       socket.off("newMessage");
     }
   },
-
 }));
-

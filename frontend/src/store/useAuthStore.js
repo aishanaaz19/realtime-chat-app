@@ -18,7 +18,6 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
-
       set({ authUser: res.data });
       get().connectSocket();
     } catch (error) {
@@ -83,17 +82,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // setBlockedUsers: (blockedUsers) => {
-  //   set(state => ({
-  //     authUser: {
-  //       ...state.authUser,
-  //       blockedUsers: blockedUsers
-  //     }
-  //   }));
-  // },
-
   addToBlockedList: (userId) => set((state) => {
-    // Ensure blockedUsers exists and is an array
     const currentBlocked = Array.isArray(state.authUser.blockedUsers) 
       ? state.authUser.blockedUsers 
       : [];
@@ -164,12 +153,12 @@ export const useAuthStore = create((set, get) => ({
   });
 },
 
-disconnectSocket: () => {
-  const socket = get().socket;
-  if (socket?.connected) {
-    socket.disconnect();
-    set({ socket: null });
-  }
+  disconnectSocket: () => {
+    const socket = get().socket;
+    if (socket?.connected) {
+      socket.disconnect();
+      set({ socket: null });
+    }
 },
 
 }));

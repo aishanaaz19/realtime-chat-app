@@ -53,7 +53,7 @@ export const addFriend = async (req, res) => {
 
 export const getFriends = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("friends", "username fullName profilePic");
+    const user = await User.findById(req.user._id).populate("friends", "username fullName profilePic bio isOnline lastActive")
     res.json(user.friends);
   } catch (error) {
     console.error("Error fetching friends:", error);
@@ -139,5 +139,13 @@ export const unblockUser = async (req, res) => {
       error: error.message
     });
   }
+};
+
+export const blockStatus =  async (req, res) => {
+  const selectedUserId = req.params.id;
+  const currentUserId = req.user._id;
+  const selectedUser = await User.findById(selectedUserId);
+  const hasBlockedYou = selectedUser.blockedUsers.includes(currentUserId);
+  res.json({ hasBlockedYou });
 };
 
