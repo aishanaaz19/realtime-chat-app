@@ -31,9 +31,9 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 
 if (process.env.NODE_ENV === "production") {
-    app.use(express.static(join(__dirname, "../frontend/dist")));
+    app.use(express.static(join(__dirname, "../../frontend/dist")));
     app.get("*", (req, res) => {
-        res.sendFile(join(__dirname, "../frontend/dist/index.html"));
+        res.sendFile(join(__dirname, "../../frontend/dist/index.html"));
     });
 }
 
