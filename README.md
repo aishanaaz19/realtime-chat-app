@@ -31,14 +31,14 @@ A modern, secure chat application built with MERN stack featuring real-time mess
 - **Git**
 
 ### 1. Clone and setup
-git clone https://github.com/aishanaaz19/realtime-chat-app.git
-cd realtime-chat-app
+```git clone https://github.com/aishanaaz19/realtime-chat-app.git```
+```cd realtime-chat-app```
 
-#### 2. Setup backend
-cd backend && npm i && npm run dev &
+### 2. Setup backend
+```cd backend && npm i && npm run dev```
 
 ### 3. Setup frontend (new terminal)
-cd frontend && npm i && npm run dev
+```cd frontend && npm i && npm run dev```
 
 ### 4.Configure your .env file in the backend directory:
 
