@@ -32,6 +32,7 @@ A modern, secure chat application built with MERN stack featuring real-time mess
 
 ### 1. Clone and setup
 ```git clone https://github.com/aishanaaz19/realtime-chat-app.git```
+
 ```cd realtime-chat-app```
 
 ### 2. Setup backend
@@ -42,7 +43,7 @@ A modern, secure chat application built with MERN stack featuring real-time mess
 
 ### 4.Configure your .env file in the backend directory:
 
-#### Database Configuration
+```#### Database Configuration
 MONGODB_URI=mongodb://localhost:27017/chatapp
 #### OR for MongoDB Atlas:
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/chatapp
@@ -58,7 +59,7 @@ NODE_ENV=development
 CORS_ORIGIN=http://localhost:3000
 
 #### Additional API Keys (if using AI features)
-AI_API_KEY=your_ai_service_api_key
+AI_API_KEY=your_ai_service_api_key```
 
 ## 🚀 Live Demo
 
