@@ -53,5 +53,15 @@ cd backend
 
 Install dependencies
 npm install
+# Clone and setup
+git clone https://github.com/aishanaaz19/realtime-chat-app.git
+cd realtime-chat-app
+
+# Setup backend
+cd backend && npm i && npm run dev &
+
+# Setup frontend (new terminal)
+cd frontend && npm i && npm run dev
+
 ## 👥 Team
 Built collaboratively by an amazing team
